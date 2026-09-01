@@ -1,10 +1,10 @@
 # Zomato Clone
 
-A full-stack food delivery web application developed as an assignment project using Django REST Framework for the backend and Vue 3 (Vite) for the frontend. The system includes restaurant discovery with category/dietary filters, a cart that restricts items to a single restaurant at a time, promotional coupon application, simulated payment processing, and order status tracking.
+A full-stack food delivery web application developed as an assignment project using Django REST Framework for the backend and Vue 3 (Vite) for the frontend. The system includes restaurant discovery with category/dietary filters, a single-restaurant cart constraint, promotional coupon discounts, simulated payment processing, order status tracking, and a built-in **Django Admin Panel** for managing the restaurant catalog, menu items, coupons, and orders.
 
 ## Tech Stack
 
-- **Backend:** Python 3.10+, Django 5, Django REST Framework, SimpleJWT, django-filter, SQLite / PostgreSQL
+- **Backend:** Python 3.10+, Django 5, Django REST Framework, SimpleJWT, django-filter, WhiteNoise, SQLite / PostgreSQL
 - **Frontend:** Vue 3 (Composition API), Vite, Pinia, Vue Router 4, Axios, Tailwind CSS
 
 ---
@@ -34,6 +34,8 @@ pip install -r requirements.txt
 DATABASE_URL=postgresql://postgres:password@host:5432/postgres?sslmode=require
 DEBUG=True
 SECRET_KEY=django-insecure-change-this-in-production-long-secure-key-50-characters
+ALLOWED_HOSTS=localhost,127.0.0.1,*
+CORS_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 
 # Run database migrations
 python manage.py migrate
@@ -71,3 +73,87 @@ npm run dev
 ```
 
 - Frontend App: `http://localhost:5173`
+
+> **Note on Environment Variables:** By default, the frontend connects to `http://localhost:8000/api`. If your backend runs on a different port or host, create a `.env` file in the `frontend` root with `VITE_API_BASE_URL=http://your-backend-url/api`.
+
+---
+
+## Django Admin Panel
+
+The backend includes a fully configured Django Admin panel for administrative operations and catalog management:
+
+- **Admin URL:** `http://localhost:8000/admin/`
+- **Admin Mobile / Username:** `9999999999`
+- **Admin Password:** `admin123`
+
+### Administrative Capabilities:
+- **Restaurant Management:** Add, edit, or remove restaurants, update cuisine tags, delivery times, and cover images.
+- **Menu Management:** Add new dishes, edit pricing, assign categories (Starters, Main Course, Desserts, Beverages), and toggle stock availability (`is_available`).
+- **Coupon Management:** Create discount promo codes (`ZOMATO50`, `WELCOME100`), configure discount types (flat vs. percentage), minimum cart values, and maximum discount caps.
+- **Order Lifecycle Management:** Inspect placed orders, view customer delivery addresses, update order status progression (`PLACED` → `CONFIRMED` → `PREPARING` → `OUT_FOR_DELIVERY` → `DELIVERED`), and verify payment records.
+- **User & Review Moderation:** View registered users and manage restaurant ratings and reviews.
+
+---
+
+## Core Features
+
+1. **Authentication:** Mobile OTP-based authentication using SimpleJWT access & refresh tokens.
+2. **Restaurant Discovery:** Search by name or cuisine, filter by pure-veg, minimum ratings, fast delivery, and sort by pricing/rating.
+3. **Cart Management:** Enforces single-restaurant ordering rule with a modal prompt to clear cart if items from another restaurant are added.
+4. **Coupons & Pricing:** Dynamic subtotal calculation, 5% GST tax, delivery fee calculation, and promo code discounts.
+5. **Simulated Payment Gateway:** Two-step payment simulation (order initiation and payment verification) mimicking Razorpay.
+6. **Live Order Status Tracking:** Visual step-tracker following the complete order lifecycle from placement to delivery.
+
+---
+
+## API Documentation
+
+| Method | Endpoint | Description | Auth Required |
+|:-------|:---------|:------------|:--------------|
+| `POST` | `/api/auth/send-otp/` | Generate and send a 6-digit OTP to mobile | No |
+| `POST` | `/api/auth/verify-otp/` | Verify OTP and return JWT access/refresh tokens | No |
+| `GET`  | `/api/auth/profile/` | Retrieve current user profile | Yes |
+| `GET`  | `/api/restaurants/` | List restaurants with search, cuisine, and veg filters | No |
+| `GET`  | `/api/restaurants/<id>/` | Retrieve restaurant details, menu categories, and reviews | No |
+| `GET`  | `/api/restaurants/top-picks/` | Retrieve top-rated restaurants (rating >= 4.0) | No |
+| `GET`  | `/api/coupons/` | List available promo coupons | No |
+| `POST` | `/api/coupons/apply/` | Validate coupon code against current subtotal | No |
+| `GET`  | `/api/cart/` | List cart items for the authenticated user | Yes |
+| `POST` | `/api/cart/` | Add menu item to cart (returns 409 on restaurant conflict) | Yes |
+| `PATCH`| `/api/cart/<id>/` | Update item quantity (setting to 0 removes the item) | Yes |
+| `POST` | `/api/cart/clear/` | Remove all items from user's cart | Yes |
+| `GET`  | `/api/cart/summary/` | Get calculated subtotal, 5% GST, and delivery fee | Yes |
+| `GET`  | `/api/orders/` | List user order history | Yes |
+| `POST` | `/api/orders/` | Place a new order from current cart or item payload | Yes |
+| `POST` | `/api/orders/<id>/cancel/` | Cancel an order (allowed only in `PLACED` status) | Yes |
+| `POST` | `/api/orders/<id>/progress-status/` | Progress order status to next stage (demo action) | Yes |
+| `POST` | `/api/payments/create-razorpay-order/` | Generate test payment order ID and amount in paise | Yes |
+| `POST` | `/api/payments/verify-razorpay-payment/` | Mark order payment as PAID with transaction ID | Yes |
+| `GET`  | `/api/reviews/` | List customer reviews for restaurants | No |
+| `POST` | `/api/reviews/` | Submit a rating and review (recalculates restaurant average) | Yes |
+
+---
+
+## Screenshots of the UI
+
+### 1. Home Page & Restaurant Discovery
+![Home Page / Restaurant Listing](./screenshots/home_page.png)
+
+### 2. Menu Page & Cart Drawer
+![Menu & Cart Drawer](./screenshots/menu_cart_drawer.png)
+
+### 3. Checkout & Order Status Tracker
+![Checkout & Order Status Tracker](./screenshots/checkout_order_tracker.png)
+
+---
+
+## Deployment Links
+
+- **Live Frontend App:** `https://zomato-clone-eight-mu.vercel.app/` 
+- **Live Backend API:** `https://zomato-clone-phbn.onrender.com`
+- **API Documentation:** `https://zomato-clone-phbn.onrender.com/api/docs/`
+
+### Demo Test Credentials
+
+- **Mobile Number:** `9876543210` (or any valid 10-digit number)
+- **OTP Verification:** '123456'.

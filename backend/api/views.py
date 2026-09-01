@@ -2,7 +2,7 @@ import uuid
 from decimal import Decimal
 from django.db import transaction
 from django.db.models import Avg
-from rest_framework import status, viewsets, generics
+from rest_framework import status, viewsets, generics, serializers
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework_simplejwt.tokens import RefreshToken
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from drf_spectacular.utils import extend_schema, extend_schema_view, inline_serializer
 
 from .models import User, OTPVerification, Restaurant, MenuItem, Cart, Order, OrderItem, Review, Coupon
 from .filters import RestaurantFilter
@@ -32,9 +32,23 @@ from .serializers import (
 )
 
 
-@extend_schema(tags=['Authentication'])
+@extend_schema(
+    tags=['Authentication'],
+    request=OTPRequestSerializer,
+    responses={
+        200: inline_serializer(
+            name='SendOTPResponse',
+            fields={
+                'message': serializers.CharField(),
+                'mobile': serializers.CharField(),
+                'otp': serializers.CharField(),
+            }
+        )
+    }
+)
 class SendOTPView(APIView):
     permission_classes = [AllowAny]
+    serializer_class = OTPRequestSerializer
 
     def post(self, request):
         serializer = OTPRequestSerializer(data=request.data)
